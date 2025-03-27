@@ -1,12 +1,14 @@
 package com.example.blogs.blogsphere.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.blogs.blogsphere.DAO.RoleDAO;
 import com.example.blogs.blogsphere.DAO.UserDAO;
 import com.example.blogs.blogsphere.entity.Role;
 import com.example.blogs.blogsphere.entity.User;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
 
 @Service
 public class RoleService {
@@ -24,24 +26,33 @@ public class RoleService {
         return roleDAO.findByUserUserId(userId);
     }
 
-    // Assign a role to a user using the user's ID.
+    // Assign a role to a user using the helper method in the User entity.
     @Transactional
     public Role addRoleToUser(Long userId, Role role) {
         User user = userDAO.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        role.setUser(user);
-        return roleDAO.save(role);
+        
+        // Use the helper method in the User entity to add the role.
+        user.addRole(role);
+        // Persist the change; cascade settings on the User entity should handle the Role.
+        userDAO.save(user);
+        return role;
     }
 
-    // Remove a role for a user, identified by user id and role id.
+    // Remove a role from a user using the helper method in the User entity.
     @Transactional
     public void removeRoleForUser(Long userId, Long roleId) {
-        Role role = roleDAO.findById(roleId)
+        User user = userDAO.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        Role role = user.getRoles().stream()
+                .filter(r -> r.getRoleId().equals(roleId))
+                .findFirst()
                 .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
-        // Ensure that the role belongs to the specified user.
-        if (!role.getUser().getUserId().equals(userId)) {
-            throw new RuntimeException("Role does not belong to user with id: " + userId);
-        }
-        roleDAO.delete(role);
+        
+        // Use the helper method to remove the role.
+        user.removeRole(role);
+        // Persist the removal.
+        userDAO.save(user);
     }
 }

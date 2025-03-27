@@ -1,11 +1,12 @@
 package com.example.blogs.blogsphere.service;
 
-import com.example.blogs.blogsphere.DAO.TagDAO;
-import com.example.blogs.blogsphere.entity.Tag;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.example.blogs.blogsphere.DAO.TagDAO;
+import com.example.blogs.blogsphere.entity.Tag;
 
 @Service
 public class TagService {
@@ -16,24 +17,24 @@ public class TagService {
         this.tagDAO = tagDAO;
     }
 
-    // Retrieve all tags
+    // Retrieve all tags.
     public List<Tag> getAllTags() {
         return tagDAO.findAll();
     }
 
-    // Retrieve a tag by its ID
+    // Retrieve a tag by its ID.
     public Tag getTagById(Long tagId) {
         return tagDAO.findById(tagId)
                 .orElseThrow(() -> new RuntimeException("Tag not found with id: " + tagId));
     }
 
-    // Create a new tag
+    // Create a new tag.
     @Transactional
     public Tag createTag(Tag tag) {
         return tagDAO.save(tag);
     }
 
-    // Update an existing tag
+    // Update an existing tag.
     @Transactional
     public Tag updateTag(Long tagId, Tag updatedTag) {
         Tag existingTag = getTagById(tagId);
@@ -41,7 +42,7 @@ public class TagService {
         return tagDAO.save(existingTag);
     }
 
-    // Delete a tag by its ID
+    // Delete a tag by its ID.
     @Transactional
     public void deleteTag(Long tagId) {
         tagDAO.deleteById(tagId);

@@ -1,31 +1,36 @@
 package com.example.blogs.blogsphere.entity;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-import jakarta.persistence.Column;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+
 
 @Entity
-@Table(name = "tags")
 public class Tag {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long tagId;
-
-    @Column(nullable = false, unique = true)
+    
     private String name;
+    
+    // Many-to-Many relationship with posts (bidirectional)
+    @ManyToMany(mappedBy = "tags")
+    @JsonIgnore
+    private Set<Post> posts = new HashSet<>();
 
-    // Bidirectional Many-to-Many: Tag <-> Post
-    @ManyToMany(mappedBy = "tags", fetch = FetchType.LAZY)
-    private List<Post> posts = new ArrayList<>();
+    // Constructors
+    public Tag() {}
+
+    public Tag(String name) {
+        this.name = name;
+    }
 
     // Getters and Setters
     public Long getTagId() {
@@ -40,15 +45,22 @@ public class Tag {
     public void setName(String name) {
         this.name = name;
     }
-    public List<Post> getPosts() {
+    public Set<Post> getPosts() {
         return posts;
     }
-    public void setPosts(List<Post> posts) {
+    public void setPosts(Set<Post> posts) {
         this.posts = posts;
     }
-	
-    @Override
-	public String toString() {
-		return "Tag [tagId=" + tagId + ", name=" + name + ", posts=" + posts + "]";
-	}
+
+
+    // Helper methods (optional) can be added to manage the relationship.
+    public void addPost(Post post) {
+        posts.add(post);
+        post.getTags().add(this);
+    }
+
+    public void removePost(Post post) {
+        posts.remove(post);
+        post.getTags().remove(this);
+    }
 }

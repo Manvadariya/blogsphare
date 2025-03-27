@@ -2,39 +2,40 @@ package com.example.blogs.blogsphere.entity;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "comments")
 public class Comment {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long commentId;
-
-    @Column(nullable = false)
+    
+    @Column(length = 1000)
     private String content;
-
-    @Column(nullable = false)
+    
     private Date createdAt;
-
-    // Many-to-One: Comment -> Post
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    
+    // Many comments belong to one post
+    @ManyToOne
+    @JoinColumn(name = "post_id")
+    @JsonBackReference
     private Post post;
 
-    // Many-to-One: Comment -> User (Commenter)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "commenter_id", nullable = false)
-    private User commenter;
+    // Constructors
+    public Comment() {}
+
+    public Comment(String content, Date createdAt) {
+        this.content = content;
+        this.createdAt = createdAt;
+    }
 
     // Getters and Setters
     public Long getCommentId() {
@@ -61,16 +62,4 @@ public class Comment {
     public void setPost(Post post) {
         this.post = post;
     }
-    public User getCommenter() {
-        return commenter;
-    }
-    public void setCommenter(User commenter) {
-        this.commenter = commenter;
-    }
-	
-    @Override
-	public String toString() {
-		return "Comment [commentId=" + commentId + ", content=" + content + ", createdAt=" + createdAt + ", post="
-				+ post + ", commenter=" + commenter + "]";
-	}
 }

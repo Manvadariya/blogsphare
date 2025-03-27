@@ -1,13 +1,16 @@
 package com.example.blogs.blogsphere.entity;
 
-import java.util.Date;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -16,44 +19,42 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.Lob;
 
 @Entity
-@Table(name = "posts")
 public class Post {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long postId;
-
-    @Column(nullable = false)
+    
     private String title;
-
-    @Lob
+    
+    @Column(length = 2000)
     private String content;
-
-    // For simplicity, using Date. In production, consider proper time zones.
-    @Column(nullable = false)
+    
     private Date publishDate;
-
     private int likeCount;
-
-    // Many-to-One: Post -> User (Author)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
-    private User author;
-
-    // One-to-Many: Post -> Comments
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    
+    // Many posts belong to one user (author)
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+    
+    // One post can have many comments (bidirectional)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Comment> comments = new ArrayList<>();
+    
+    // Many-to-Many relationship with tags
+    @ManyToMany
+    @JoinTable(
+        name = "post_tags",
+        joinColumns = @JoinColumn(name = "post_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<Tag> tags = new HashSet<>();
 
-    // Many-to-Many: Post <-> Tag
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "post_tag",
-               joinColumns = @JoinColumn(name = "post_id"),
-               inverseJoinColumns = @JoinColumn(name = "tag_id"))
-    private List<Tag> tags = new ArrayList<>();
+    // Constructors
+    public Post() {}
 
     // Getters and Setters
     public Long getPostId() {
@@ -86,11 +87,11 @@ public class Post {
     public void setLikeCount(int likeCount) {
         this.likeCount = likeCount;
     }
-    public User getAuthor() {
-        return author;
+    public User getUser() {
+        return user;
     }
-    public void setAuthor(User author) {
-        this.author = author;
+    public void setUser(User user) {
+        this.user = user;
     }
     public List<Comment> getComments() {
         return comments;
@@ -98,15 +99,31 @@ public class Post {
     public void setComments(List<Comment> comments) {
         this.comments = comments;
     }
-    public List<Tag> getTags() {
+    public Set<Tag> getTags() {
         return tags;
     }
-    public void setTags(List<Tag> tags) {
+    public void setTags(Set<Tag> tags) {
         this.tags = tags;
     }
-	@Override
-	public String toString() {
-		return "Post [postId=" + postId + ", title=" + title + ", content=" + content + ", publishDate=" + publishDate
-				+ ", likeCount=" + likeCount + ", author=" + author + "]";
-	}
+    
+    // Helper methods for bidirectional associations
+    public void addComment(Comment comment) {
+        comments.add(comment);
+        comment.setPost(this);
+    }
+    
+    public void removeComment(Comment comment) {
+        comments.remove(comment);
+        comment.setPost(null);
+    }
+    
+    public void addTag(Tag tag) {
+        tags.add(tag);
+        tag.getPosts().add(this);
+    }
+    
+    public void removeTag(Tag tag) {
+        tags.remove(tag);
+        tag.getPosts().remove(this);
+    }
 }
